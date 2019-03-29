@@ -28,18 +28,18 @@ int main( int argc, char* args[] )
             return 1;//something's wrong
 
     }
+    writeSDL(&myGame,mFont);
     myMusique = Mix_LoadMUS("./Assets/son/Silent Hill Promise Extended.wav");
     while(state.g_bRunning){
-        handleEvents(&state);
+        handleEvents(&state,&myGame,&mFont);
         if (myBool == 0){
-            writeSDL(&myGame,mFont);
             MainScreen(&myGame,state);
             Mix_PlayMusic(myMusique, 1);
             myBool = 1;
         }
         if (state.g_bRunning == 2){
             if (myBool2==0){
-                printf("Test");
+                printf("Scene 2");
                 myBool2 = 1;
                 Scene1(&myGame,state);
             }
@@ -106,9 +106,53 @@ int init(char *title, int xpos,int ypos,int height, int width,int flags,game *my
 
 }
 
-void handleEvents(gameState *state){
+int Text(game *myGame,font *mFont, char ctext[])
+{
+
+    printf("%s\n",ctext);
+    if(TTF_Init() == -1)
+    {
+        fprintf(stderr, "Erreur d'initialisation de TTF_Init : %s\n", TTF_GetError());
+        exit(EXIT_FAILURE);
+    }
+
+    mFont->g_font=TTF_OpenFont("./Fonts/Matilda.ttf",25);
+
+    if(!mFont->g_font) {
+        printf("TTF_OpenFont: %s\n", TTF_GetError());
+        SDL_Delay(5000);
+        exit(EXIT_FAILURE);
+    }
+
+     SDL_Color fontColor={255,255,255};
+     myGame->g_surface=TTF_RenderText_Blended(mFont->g_font, ctext, fontColor);//Charge la police
+    //DÃ©finition du rectangle dest pour blitter la chaine
+    SDL_Rect rectangle;
+
+    rectangle.x=0;//debut x
+    rectangle.y=50;//debut y
+    rectangle.w=600; //Largeur
+    rectangle.h=25; //Hauteur
+
+    myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // PrÃ©paration de la texture pour la chaine
+    // LibÃ©ration de la ressource occupÃ©e par le sprite
+    if(!myGame->g_surface)
+        SDL_FreeSurface(myGame->g_surface);
+
+
+    if(myGame->g_texture){
+        SDL_RenderCopy(myGame->g_pRenderer,myGame->g_texture,NULL,&rectangle); // Copie du sprite grÃ¢ce au SDL_Renderer
+        SDL_RenderPresent(myGame->g_pRenderer); // Affichage
+                        //TODO out of memory sdl texture
+                 }
+    return 1;
+
+}
+
+void handleEvents(gameState *state,game *myGame,font *mFont){
 
     SDL_Event event;
+
     if(SDL_PollEvent(&event)){
         switch(event.type){
         case SDL_QUIT:
@@ -116,32 +160,37 @@ void handleEvents(gameState *state){
         case SDL_KEYDOWN:
                         switch (event.key.keysym.sym)
                             {
-                                case SDLK_LEFT: printf("Left\n") ; break;
-                                case SDLK_RIGHT: printf("right\n"); break;
-                                case SDLK_UP: printf("up\n")   ; break;
-                                case SDLK_DOWN:printf("down\n")  ; break;
+                                case SDLK_ESCAPE: state->g_bRunning = 0  ; break;
                                 case SDLK_SPACE:state->g_bRunning = 2;break;
-
                             }
                             break;
     SDL_WaitEvent(&event);
 
         }
     }
-switch(event.type)
+    switch(event.type)
+    {
+        case SDL_QUIT: state->g_bRunning=0;break;
+        case SDL_MOUSEBUTTONUP:
+            if ((event.button.button == SDL_BUTTON_LEFT) && (state->g_bRunning==2)){
+                SDL_WaitEvent(&event);
+                printf("\nSourie en X : %d\n",event.button.x);
+                printf("Sourie en Y : %d\n",event.button.y);
 
-{
+                if(((event.button.x > 290 ) && (event.button.x < 423))&& ((event.button.y > 304)&&(event.button.y <496))){
+                    char ctext[] = "La porte de ma chambre.... ";
+                    printf("Clik sur la porte ! \n");
+                    //Text(myGame,mFont,ctext);
 
-    case SDL_QUIT: state->g_bRunning=0;break;
-    case SDL_MOUSEBUTTONUP:
-        if ((event.button.button == SDL_BUTTON_RIGHT) && (state->g_bRunning==2)){
-            SDL_WaitEvent(&event);
-            printf("\nSourie en X : %d\n",event.button.x);
-            printf("Sourie en Y : %d\n",event.button.y);
-            if(((event.button.x > 100 ) && (event.button.x < 400))&& ((event.button.y > 150)&&(event.button.x <400))){
-                    printf("Bite ! \n");
+                }
+
+                if(((event.button.x > 563 ) && (event.button.x < 788))&& ((event.button.y > 415)&&(event.button.y <501))){
+                    char ctext[] = "Mon Lit....";
+                    printf("Clik sur le lit ! \n");
+                    //Text(myGame,mFont,ctext);
+
+                }
             }
-        }
     break;
 
 }
@@ -154,21 +203,17 @@ void MainScreen(game *myGame,gameState state){
 
         if (state.g_bRunning==1){
             myGame->g_surface = IMG_Load("./Assets/main.png");//Chargement de l'image png
-            printf("1");
+            printf("Ecran titre\n");
         }
 
-        if (state.g_bRunning==2){
-                myGame->g_surface = IMG_Load("./Assets/meme.png");//Chargement de l'image png
-            printf("2");
-        }
 
 
 
         if(myGame->g_surface){
 
 
-                 myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // Préparation du sprite
-                 SDL_FreeSurface(myGame->g_surface); // Libération de la ressource occupée par le sprite
+                 myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // PrÃ©paration du sprite
+                 SDL_FreeSurface(myGame->g_surface); // LibÃ©ration de la ressource occupÃ©e par le sprite
 
                 if(myGame->g_texture){
 
@@ -179,7 +224,7 @@ void MainScreen(game *myGame,gameState state){
 
                     SDL_QueryTexture(myGame->g_texture,NULL,NULL,NULL,NULL);
 
-                    //Définition du rectangle dest pour dessiner Bitmap
+                    //DÃ©finition du rectangle dest pour dessiner Bitmap
                     rectangleDest.x=SCREEN_WIDTH/2-rectangleSource.w/2;//debut x
                     rectangleDest.y=150;//debut y
                     rectangleDest.w=rectangleSource.w; //Largeur
@@ -202,13 +247,13 @@ void MainScreen(game *myGame,gameState state){
                 }
 
                 else{
-                        fprintf(stdout,"Échec de création de la texture (%s)\n",SDL_GetError());
+                        fprintf(stdout,"Ã‰chec de crÃ©ation de la texture (%s)\n",SDL_GetError());
                 }
 
 
 
         }else{
-            fprintf(stdout,"Échec de chargement du sprite (%s)\n",SDL_GetError());
+            fprintf(stdout,"Ã‰chec de chargement du sprite (%s)\n",SDL_GetError());
         }
 
 
@@ -219,31 +264,27 @@ void Scene1(game *myGame,gameState state){
 
         SDL_Rect rectangleDest;
         SDL_Rect rectangleSource;
-        game asset;
-
         if (state.g_bRunning==2){
-            myGame->g_surface = IMG_Load("./Assets/meme.png");//Chargement de l'image png
-
-            printf("2");
+            myGame->g_surface = IMG_Load("./Assets/scene1.png");//Chargement de l'image png
         }
 
 
         if(myGame->g_surface){
 
 
-                 myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // Préparation du sprite
-                 SDL_FreeSurface(myGame->g_surface); // Libération de la ressource occupée par le sprite
+                 myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // PrÃ©paration du sprite
+                 SDL_FreeSurface(myGame->g_surface); // LibÃ©ration de la ressource occupÃ©e par le sprite
 
                 if(myGame->g_texture){
 
                     rectangleSource.x=0;
-                    rectangleSource.y=-200;
+                    rectangleSource.y=-0;
                     rectangleSource.w=800;//1 image = w:128 et h:82
                     rectangleSource.h=500;
 
                     SDL_QueryTexture(myGame->g_texture,NULL,NULL,NULL,NULL);
 
-                    //Définition du rectangle dest pour dessiner Bitmap
+                    //DÃ©finition du rectangle dest pour dessiner Bitmap
                     rectangleDest.x=SCREEN_WIDTH/2-rectangleSource.w/2;//debut x
                     rectangleDest.y=150;//debut y
                     rectangleDest.w=rectangleSource.w; //Largeur
@@ -265,13 +306,13 @@ void Scene1(game *myGame,gameState state){
                 }
 
                 else{
-                        fprintf(stdout,"Échec de création de la texture (%s)\n",SDL_GetError());
+                        fprintf(stdout,"Ã‰chec de crÃ©ation de la texture (%s)\n",SDL_GetError());
                 }
 
 
 
         }else{
-            fprintf(stdout,"Échec de chargement du sprite (%s)\n",SDL_GetError());
+            fprintf(stdout,"Ã‰chec de chargement du sprite (%s)\n",SDL_GetError());
         }
 
 
@@ -286,7 +327,7 @@ void writeSDL(game *myGame,font mFont) {
         if(myGame->g_surface){
 
 
-                //Définition du rectangle dest pour blitter la chaine
+                //DÃ©finition du rectangle dest pour blitter la chaine
                 SDL_Rect rectangle;
                 rectangle.x=SCREEN_WIDTH/2-300;//debut x
                 rectangle.y=0;//debut y
@@ -294,29 +335,29 @@ void writeSDL(game *myGame,font mFont) {
                 rectangle.h=150; //Hauteur
 
 
-                 myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // Préparation de la texture pour la chaine
-                // Libération de la ressource occupée par le sprite
+                 myGame->g_texture = SDL_CreateTextureFromSurface(myGame->g_pRenderer,myGame->g_surface); // PrÃ©paration de la texture pour la chaine
+                // LibÃ©ration de la ressource occupÃ©e par le sprite
                 if(!myGame->g_surface)
                     SDL_FreeSurface(myGame->g_surface);
 
 
                  if(myGame->g_texture){
 
-                        SDL_RenderCopy(myGame->g_pRenderer,myGame->g_texture,NULL,&rectangle); // Copie du sprite grâce au SDL_Renderer
+                        SDL_RenderCopy(myGame->g_pRenderer,myGame->g_texture,NULL,&rectangle); // Copie du sprite grÃ¢ce au SDL_Renderer
                         SDL_RenderPresent(myGame->g_pRenderer); // Affichage
                         //TODO out of memory sdl texture
                  }
                  else{
-                        fprintf(stdout,"Échec de création de la texture (%s)\n",SDL_GetError());
+                        fprintf(stdout,"Ã‰chec de crÃ©ation de la texture (%s)\n",SDL_GetError());
                 }
 
 
 
         }else{
-            fprintf(stdout,"Échec de creation surface pour chaine (%s)\n",SDL_GetError());
+            fprintf(stdout,"Ã‰chec de creation surface pour chaine (%s)\n",SDL_GetError());
         }
 
-        destroyTexture(myGame);
+        //destroyTexture(myGame);
 
 
 }
@@ -349,4 +390,6 @@ void destroyTexture(game *myGame){
 
 
 }
+
+
 
