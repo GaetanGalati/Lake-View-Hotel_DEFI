@@ -1,5 +1,7 @@
 #ifndef GAME_H_INCLUDED
 #define GAME_H_INCLUDED
+#define SCREEN_WIDTH 800
+#define SCREEN_HEIGHT 600
 
 typedef struct game{
 
@@ -39,7 +41,8 @@ typedef enum BOOL{true,false}BOOL;
 
 
 int init(char *title, int xpos,int ypos,int height, int width,int flags,game *myGame,font *mFont);
-void handleEvents(gameState *state);
+int Text(game *myGame,font *mFont, char ctext[200]);
+void handleEvents(gameState *state,game *myGame,font *mFont);
 void MainScreen(game *myGame,gameState state);
 void Scene1(game *myGame,gameState state);
 void writeSDL(game *myGame,font mFont);
@@ -49,7 +52,6 @@ void destroyFont(font *mFont);
 void destroy(game *myGame);
 
 //Screen dimension constants
-const int SCREEN_WIDTH = 800;
-const int SCREEN_HEIGHT = 600;
+
 
 #endif // GAME_H_INCLUDED
